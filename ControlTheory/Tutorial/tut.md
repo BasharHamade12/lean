@@ -1,3 +1,4 @@
+$\times$
 # Beginning of the Journey :
 
 for any (somewhat big) Lean Project , we will need mathlib integration into our project . Here's a step by step guide to set up a Lean4 Project with Mathlib :
@@ -126,6 +127,14 @@ theorem eq_refl {α : Type} (a : α) : a = a := rfl
 ```
 {α : Type} is implicit, inferred from a’s type when you write eq_refl 42 (Lean4 deduces α = Nat).
 (a : α) is explicit, requiring you to provide a.
+
+
+### *)Theorems as Functions: Theorems are types, and proofs are functions producing terms of those types, aligning with functional programming’s type-driven approach. 
+
+### *)Predicates as Types: Predicates map values to propositions, requiring proof terms, not booleans.
+
+### *)Proofs as Terms: Proofs are constructed like values of algebraic types, familiar to functional programmers. 
+
 
 ## 2) Tactics : 
 ### Common Lean Tactics
@@ -350,7 +359,7 @@ check simplegraph.lean
 ![](image-4.png) 
 
 
-6) Dependent Types in Lean4
+# 6) Dependent Types in Lean4
 Dependent types in Lean4 allow types to depend on values, enabling precise specifications and proofs, unlike standard functional programming languages like Haskell. They’re ideal for encoding invariants, such as matrix dimensions or state machine properties, crucial for control theory.
 
 
