@@ -30,6 +30,13 @@ import Mathlib.Analysis.Matrix
 
 open Matrix Finset
 
+variable {R : Type*} [NormedField R]
+variable {n : ℕ}
+
+
+noncomputable instance : NormedSpace R (Fin n → Fin n → R) :=
+  Matrix.normedSpace
+
 -- Define state and input vector types
 def StateVector (n : ℕ) := Fin n → ℝ
 def InputVector (p : ℕ) := Fin p → ℝ
@@ -37,6 +44,8 @@ def InputVector (p : ℕ) := Fin p → ℝ
 -- Add Zero instances
 instance {n : ℕ} : Zero (StateVector n) := ⟨fun _ => 0⟩
 instance {p : ℕ} : Zero (InputVector p) := ⟨fun _ => 0⟩
+
+
 
 instance {n : ℕ} : NormedAddCommGroup (StateVector n) :=
   Pi.normedAddCommGroup  -- This gives us the standard normed space structure
@@ -89,17 +98,22 @@ def spectral_radius_less_than_one2 {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ) : 
   spectralRadius ℂ (A.map (algebraMap ℝ ℂ)) < 1
 
 
-
-
-def gelfand_condition_less_than_one2 {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ) : Prop :=
-  Filter.Tendsto (fun k : ℕ => norm ( (A.map (algebraMap ℝ ℂ)) ^ k) ^ (1 / k : ℝ)) Filter.atTop (nhds 0)
-
---theorem spectral_radius_iff_gelfand {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ) :
---  spectralRadius ℂ (A.map (algebraMap ℝ ℂ)) < 1 ↔
---  Filter.Tendsto (fun k : ℕ => ‖(A.map (algebraMap ℝ ℂ)) ^ k‖ ^ (1 / k : ℝ)) Filter.atTop
---    (nhds (spectralRadius ℂ (A.map (algebraMap ℝ ℂ)))) ∧
---  spectralRadius ℂ (A.map (algebraMap ℝ ℂ)) < 1 := by
---  sorry
+theorem norm_pow_one_div_lt_one_of_spectral_radius_lt_one (hA : spectralRadius ℂ A < 1) :
+    ∃ N : ℕ, ∀ n ≥ N, (‖A ^ n‖₊ : ℝ) ^ (1 / n) < 1 := by
+  -- Gelfand's formula: ‖A^n‖₊^(1/n) → ρ(A)
+  have h_tendsto := spectrum.pow_nnnorm_pow_one_div_tendsto_nhds_spectralRadius A
+  -- Since ρ(A) < 1, there exists ε > 0 such that ρ(A) + ε < 1
+  obtain ⟨ε, hε_pos, hε_lt⟩ := exists_pos_lt_sub hA zero_lt_one
+  -- By convergence, ∃ N such that ∀ n ≥ N, ‖A^n‖₊^(1/n) < ρ(A) + ε
+  rw [Metric.tendsto_atTop] at h_tendsto
+  specialize h_tendsto ε hε_pos
+  obtain ⟨N, hN⟩ := h_tendsto
+  -- Thus, for n ≥ N, ‖A^n‖₊^(1/n) < ρ(A) + ε < 1
+  refine ⟨N, fun n hn => ?_⟩
+  specialize hN n hn
+  rw [dist_eq_norm] at hN
+  simp at hN
+  exact lt_trans hN hε_lt
 
 
 lemma system_power_multiplication {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ) (k : ℕ) :
@@ -148,7 +162,7 @@ theorem asymptotic_stability_discrete {n p : ℕ} (sys : DiscreteLinearSystemSta
   (h_state : state_system_equation sys)
   (h_zero_input : sys.u = zero_input)
   (h_spectral : spectral_radius_less_than_one2 sys.A) :
-  Filter.Tendsto (fun k => ‖sys.x k‖) Filter.atTop (nhds 0) := by 
+  Filter.Tendsto (fun k => ‖sys.x k‖) Filter.atTop (nhds 0) := by
   unfold Filter.Tendsto
     -- Express state vector in terms of matrix power
   have hx : ∀ k, sys.x k = (sys.A ^ k).mulVec sys.x₀ :=
@@ -157,7 +171,7 @@ theorem asymptotic_stability_discrete {n p : ℕ} (sys : DiscreteLinearSystemSta
 
   simp only [hx]
   --unfold Filter.Tendsto
-  unfold spectral_radius_less_than_one2 at h_spectral 
+  unfold spectral_radius_less_than_one2 at h_spectral
 
 
 
