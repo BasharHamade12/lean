@@ -28,14 +28,11 @@ import Mathlib.Analysis.Normed.Algebra.Spectrum
 import Mathlib.Analysis.Matrix
 import Mathlib.Analysis.CStarAlgebra.CStarMatrix
 
-
-
-
 variable {R : Type*} [NormedField R]
 variable {A : Type*}
 variable {n : ℕ}
 
-
+open scoped ComplexOrder
 
 def spectral_radius_less_than_one3 [NormedRing A] [NormedAlgebra ℂ A] (a : A) : Prop :=
   spectralRadius ℂ a < 1
@@ -58,12 +55,13 @@ theorem gelfand_le_one_when_spectral_radius_le_one
 
 
 
-abbrev StateVector (n : ℕ) := Fin n → ℝ
-abbrev InputVector (p : ℕ) := Fin p → ℝ
+abbrev StateVector (n : ℕ) := Fin n → ℂ
+abbrev InputVector (p : ℕ) := Fin p → ℂ
+abbrev InputMatrix (n p : ℕ) :=   CStarMatrix (Fin n) (Fin p) ℂ
 
 
-abbrev StateMatrix (n : ℕ) := CStarMatrix (Fin n) (Fin n) ℝ
-abbrev InputMatrix (n p : ℕ) := Matrix (Fin n) (Fin p) ℝ
+abbrev StateMatrix (n : ℕ) := CStarMatrix (Fin n) (Fin n) ℂ
+
 
 
 noncomputable instance (n : ℕ) : Ring (StateMatrix n) := Matrix.instRing
@@ -72,9 +70,15 @@ noncomputable instance (n : ℕ) : Ring (StateMatrix n) := Matrix.instRing
 noncomputable instance (n : ℕ) : SeminormedAddCommGroup (StateMatrix n) := Matrix.seminormedAddCommGroup
 
 
-noncomputable instance (n : ℕ) : NormedRing (StateMatrix n) := Matrix.frobeniusNormedRing
+noncomputable instance (n : ℕ) : NormedRing (StateMatrix n) := CStarMatrix.instNormedRing
 
-noncomputable instance (n : ℕ) : NormedAlgebra ℂ (StateMatrix n) := sorry
+noncomputable instance (n : ℕ) : NormedAlgebra ℂ (StateMatrix n) := by
+{
+  unfold StateMatrix
+  exact CStarMatrix.instNormedAlgebra (n := Fin n) (A := ℂ)
+}
+
+
 
 /--
 noncomputable instance (n : ℕ) : NormedAlgebra ℂ (StateMatrix n) := CStarMatrix.instNormedAlgebra
@@ -100,7 +104,7 @@ structure DiscreteLinearSystemState (n p : ℕ) where
   u : ℕ → InputVector p         -- Input sequence
 
 -- System evolution function
-def system_evolution {n p : ℕ} (sys : DiscreteLinearSystemState n p) : ℕ → StateVector n
+noncomputable def system_evolution {n p : ℕ} (sys : DiscreteLinearSystemState n p) : ℕ → StateVector n
   | 0 => sys.x₀
   | k + 1 => sys.a.mulVec (system_evolution sys k) + sys.B.mulVec (sys.u k)
 
