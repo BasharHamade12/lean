@@ -64,10 +64,10 @@ abbrev StateMatrix (n : ℕ) := CStarMatrix (Fin n) (Fin n) ℂ
 
 
 
-noncomputable instance (n : ℕ) : Ring (StateMatrix n) := Matrix.instRing
+noncomputable instance (n : ℕ) : Ring (StateMatrix n) := CStarMatrix.instRing
 
 
-noncomputable instance (n : ℕ) : SeminormedAddCommGroup (StateMatrix n) := Matrix.seminormedAddCommGroup
+-- noncomputable instance (n : ℕ) : SeminormedAddCommGroup (StateMatrix n) := Matrix.seminormedAddCommGroup
 
 
 noncomputable instance (n : ℕ) : NormedRing (StateMatrix n) := CStarMatrix.instNormedRing
@@ -115,3 +115,101 @@ def state_system_equation {n p : ℕ} (sys : DiscreteLinearSystemState n p) : Pr
 -- Now you can use properties that require NormedRing/NormedAlgebra
 def system_is_stable {n p : ℕ} (sys : DiscreteLinearSystemState n p) : Prop :=
   spectral_radius_less_than_one3 sys.a
+
+def zero_input {p : ℕ} : ℕ → InputVector p := fun _ => 0
+
+
+lemma system_power_multiplication {n : ℕ} (a : StateMatrix n ) (k : ℕ) :
+  a ^ (k + 1) = a * (a ^ k) := by
+  induction k with
+  | zero =>
+    simp
+  | succ k ih =>
+    rw [pow_succ]
+    rw [ih]
+    rw [mul_assoc ,<-pow_succ,ih]
+
+lemma state_evolution_zero_input {n p : ℕ} (sys : DiscreteLinearSystemState n p)
+  (h_init : sys.x 0 = sys.x₀)
+  (h_state : state_system_equation sys)
+  (h_zero_input : sys.u = zero_input) :
+  ∀ k, sys.x k = (sys.a ^ k).mulVec sys.x₀ := by
+  intro k
+  induction' k with k ih
+  ·
+    simp
+    trivial
+
+  · rw [state_system_equation] at h_state
+    specialize h_state k
+    rw [ih] at h_state
+    simp at h_state
+    rw [h_zero_input] at h_state
+    unfold zero_input at h_state
+    simp at h_state
+    rw [h_state]
+    have h_A : sys.a ^ (k + 1) = sys.a * (sys.a ^ k) := by
+      rw [system_power_multiplication]
+
+    rewrite [h_A]
+    rfl
+example [NormedRing A] [NormedAlgebra ℂ A] [CompleteSpace A] (a : A)
+  (h : spectral_radius_less_than_one3 a) :
+  Filter.limsup (fun (n : ℕ) => (‖a ^ n‖₊ : ENNReal) ^ (1 / n : ℝ)) Filter.atTop < 1 :=
+  gelfand_le_one_when_spectral_radius_le_one a h
+
+
+theorem gelfand_eventually_bounded {A : Type*} [NormedRing A] [NormedAlgebra ℂ A] [CompleteSpace A]
+    (a : A) (h : Filter.limsup (fun n : ℕ ↦ (‖a ^ n‖₊ : ENNReal) ^ (1 / n : ℝ)) Filter.atTop < 1) :
+    ∃ (r : ENNReal) (N : ℕ), 0 < r ∧ r < 1 ∧ ∀ (k : ℕ), N < k → (‖a ^ k‖₊ : ENNReal) ^ (1 / k : ℝ) < r :=
+by
+  -- Let L be the limsup
+  set L := Filter.limsup (fun n : ℕ ↦ (‖a ^ n‖₊ : ENNReal) ^ (1 / n : ℝ)) Filter.atTop with L_def
+  -- We know L < 1 from hypothesis
+
+
+  -- Choose r strictly between L and 1
+  obtain ⟨r, hLr, hr1⟩ := exists_between h
+  have r_pos : 0 < r := lt_of_le_of_lt (zero_le _) hLr
+  exists r
+  exists 0
+  constructor
+  .
+    exact r_pos
+  . constructor
+    . exact hr1
+    . intros k
+      intros k_gr_0
+      rw [Filter.limsup] at L_def
+      sorry
+
+theorem asymptotic_stability_discrete [NormedRing A] [NormedAlgebra ℂ A] [CompleteSpace A] {n p : ℕ} (sys : DiscreteLinearSystemState n p)
+  (h_init : sys.x 0 = sys.x₀)
+  (h_state : state_system_equation sys)
+  (h_zero_input : sys.u = zero_input)
+  (h_spectral : spectral_radius_less_than_one3 sys.a) :
+  Filter.Tendsto (fun k => ‖sys.x k‖) Filter.atTop (nhds 0) := by
+    unfold Filter.Tendsto
+
+
+    have hx : ∀ k, sys.x k = (sys.a ^ k).mulVec sys.x₀ :=
+      state_evolution_zero_input sys h_init h_state h_zero_input
+
+    have h_gelfand := spectrum.limsup_pow_nnnorm_pow_one_div_le_spectralRadius sys.a
+    simp only [hx]
+    have h_gelfand_le_one : Filter.limsup (fun (n : ℕ) => (‖sys.a ^ n‖₊ : ENNReal) ^ (1 / n : ℝ)) Filter.atTop < 1 := by
+      unfold spectral_radius_less_than_one3 at h_spectral
+      refine lt_of_le_of_lt ?_ h_spectral
+
+      exact h_gelfand
+
+    -- unfold Filter.limsup at h_gelfand_le_one
+
+    -- unfold Filter.atTop at h_gelfand_le_one
+
+
+
+
+
+
+    sorry
