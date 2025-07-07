@@ -230,10 +230,10 @@ theorem asymptotic_stability_discrete [NormedRing A] [NormedAlgebra ℂ A] [Comp
 
 
       -- Take k'-th power of both sides
-      have h_pow : (↑‖sys.a ^ k'‖₊ ^ (1 / k' : ℝ)) ^ k' < r ^ k' := by
-        simp
+      have h_pow : (↑‖sys.a ^ k'‖₊ ^ (1 / k' : ℝ)) ^ (k' : ℝ) < r ^ k' := by
+        rw [← ENNReal.rpow_natCast r k']
+        exact ENNReal.rpow_lt_rpow h_bound (Nat.cast_pos.mpr h_k'_pos)
 
-        sorry
 
       rw [← ENNReal.rpow_natCast, ← ENNReal.rpow_mul] at h_pow
       simp at h_pow
