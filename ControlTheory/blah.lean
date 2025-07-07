@@ -27,6 +27,8 @@ import Mathlib.Analysis.Normed.Module.Basic
 import Mathlib.Analysis.Normed.Algebra.Spectrum
 import Mathlib.Analysis.Matrix
 import Mathlib.Analysis.CStarAlgebra.CStarMatrix
+import Mathlib.Order.LiminfLimsup
+
 
 variable {R : Type*} [NormedField R]
 variable {A : Type*}
@@ -158,30 +160,44 @@ example [NormedRing A] [NormedAlgebra ℂ A] [CompleteSpace A] (a : A)
   Filter.limsup (fun (n : ℕ) => (‖a ^ n‖₊ : ENNReal) ^ (1 / n : ℝ)) Filter.atTop < 1 :=
   gelfand_le_one_when_spectral_radius_le_one a h
 
+theorem convergence
+    {A : Type*} [NormedRing A] [NormedAlgebra ℂ A] [CompleteSpace A]
+    (a : A)
+    (h : Filter.limsup (fun n : ℕ ↦ (‖a ^ n‖₊ : ENNReal)) Filter.atTop < 1) :
+    ∃ (r : ENNReal) (N : ℕ), 0 < r ∧ r < 1 ∧ ∀ (k : ℕ), N < k → (‖a ^ k‖₊ : ENNReal) < r := by
+
+
+  obtain ⟨r, h_limsup_lt_r, h_r_lt_one⟩ := exists_between h
+
+  have r_pos : 0 < r := lt_of_le_of_lt (zero_le _) h_limsup_lt_r
+
+
+
+  have eventually_lt := Filter.eventually_lt_of_limsup_lt h_limsup_lt_r
+
+
+  rw [Filter.eventually_atTop] at eventually_lt
+  obtain ⟨N, hN⟩ := eventually_lt
+
+  use r, N
+  refine ⟨r_pos, h_r_lt_one, fun k hk => hN k (Nat.le_of_lt hk)⟩
 
 theorem gelfand_eventually_bounded {A : Type*} [NormedRing A] [NormedAlgebra ℂ A] [CompleteSpace A]
     (a : A) (h : Filter.limsup (fun n : ℕ ↦ (‖a ^ n‖₊ : ENNReal) ^ (1 / n : ℝ)) Filter.atTop < 1) :
     ∃ (r : ENNReal) (N : ℕ), 0 < r ∧ r < 1 ∧ ∀ (k : ℕ), N < k → (‖a ^ k‖₊ : ENNReal) ^ (1 / k : ℝ) < r :=
 by
-  -- Let L be the limsup
-  set L := Filter.limsup (fun n : ℕ ↦ (‖a ^ n‖₊ : ENNReal) ^ (1 / n : ℝ)) Filter.atTop with L_def
-  -- We know L < 1 from hypothesis
+  obtain ⟨r, h_limsup_lt_r, h_r_lt_one⟩ := exists_between h
+  have r_pos : 0 < r := lt_of_le_of_lt (zero_le _) h_limsup_lt_r
+
+  have eventually_lt := Filter.eventually_lt_of_limsup_lt h_limsup_lt_r
+
+  rw [Filter.eventually_atTop] at eventually_lt
+  obtain ⟨N, hN⟩ := eventually_lt
+
+  use r, N
+  refine ⟨r_pos, h_r_lt_one, fun k hk => hN k (Nat.le_of_lt hk)⟩
 
 
-  -- Choose r strictly between L and 1
-  obtain ⟨r, hLr, hr1⟩ := exists_between h
-  have r_pos : 0 < r := lt_of_le_of_lt (zero_le _) hLr
-  exists r
-  exists 0
-  constructor
-  .
-    exact r_pos
-  . constructor
-    . exact hr1
-    . intros k
-      intros k_gr_0
-      rw [Filter.limsup] at L_def
-      sorry
 
 theorem asymptotic_stability_discrete [NormedRing A] [NormedAlgebra ℂ A] [CompleteSpace A] {n p : ℕ} (sys : DiscreteLinearSystemState n p)
   (h_init : sys.x 0 = sys.x₀)
@@ -200,16 +216,30 @@ theorem asymptotic_stability_discrete [NormedRing A] [NormedAlgebra ℂ A] [Comp
     have h_gelfand_le_one : Filter.limsup (fun (n : ℕ) => (‖sys.a ^ n‖₊ : ENNReal) ^ (1 / n : ℝ)) Filter.atTop < 1 := by
       unfold spectral_radius_less_than_one3 at h_spectral
       refine lt_of_le_of_lt ?_ h_spectral
-
       exact h_gelfand
 
-    -- unfold Filter.limsup at h_gelfand_le_one
+    have eventually_bounded := gelfand_eventually_bounded sys.a h_gelfand_le_one
+    obtain ⟨r, N, r_pos, r_lt_one, h_bound⟩ := eventually_bounded
 
-    -- unfold Filter.atTop at h_gelfand_le_one
+    have h_power : ∀ (k : ℕ), N < k → ↑‖sys.a ^ k‖₊ < r ^ k := by
+      intros k' hk'
+      specialize h_bound k' hk'
+      have h_k'_pos : 0 < k' := Nat.zero_lt_of_lt hk'
+      have h_inv_k' : (k' : ℝ)⁻¹ * k' = 1 := by
+        field_simp
 
 
+      -- Take k'-th power of both sides
+      have h_pow : (↑‖sys.a ^ k'‖₊ ^ (1 / k' : ℝ)) ^ k' < r ^ k' := by
+        simp
 
+        sorry
 
+      rw [← ENNReal.rpow_natCast, ← ENNReal.rpow_mul] at h_pow
+      simp at h_pow
+      rw [h_inv_k'] at h_pow
+      simp at h_pow
+      exact h_pow
 
 
     sorry
