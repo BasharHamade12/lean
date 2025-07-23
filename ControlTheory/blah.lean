@@ -51,6 +51,7 @@ theorem gelfand_le_one_when_spectral_radius_le_one
 
   have h_gelfand := spectrum.limsup_pow_nnnorm_pow_one_div_le_spectralRadius a
 
+
   convert lt_of_le_of_lt h_gelfand h_spectral
 
 
@@ -199,6 +200,7 @@ by
 
 
 
+
 theorem asymptotic_stability_discrete [NormedRing A] [NormedAlgebra ℂ A] [CompleteSpace A] {n p : ℕ} (sys : DiscreteLinearSystemState n p)
   (h_init : sys.x 0 = sys.x₀)
   (h_state : state_system_equation sys)
@@ -240,6 +242,26 @@ theorem asymptotic_stability_discrete [NormedRing A] [NormedAlgebra ℂ A] [Comp
       rw [h_inv_k'] at h_pow
       simp at h_pow
       exact h_pow
+
+
+    have h_norm_bound : ∀ (k : ℕ), N < k → ‖sys.x k‖ ≤ ‖sys.a ^ k‖ * ‖sys.x₀‖ := by
+      intros k hk
+      specialize hx k
+      rw [hx]
+      -- Use convert to handle the type mismatch
+
+      have h_eq := @Matrix.linfty_opNorm_mulVec (Fin n) (Fin n) ℂ _ _ _
+        (sys.a ^ k : Matrix (Fin n) (Fin n) ℂ) sys.x₀
+
+
+      convert h_eq  
+      sorry 
+    
+
+
+    
+
+
 
 
     sorry
