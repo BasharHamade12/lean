@@ -54,18 +54,15 @@ lemma system_power_multiplication_flopped (a : σ →L[ℂ] σ) (k : ℕ) :
   | succ k ih =>
     rw [pow_succ]
     rw [ih]
-    -- Now we have: a.comp (a^k) * a = a.comp (a^(k + 1))
-    -- Since * is composition, this is: (a.comp (a^k)).comp a = a.comp (a^(k + 1))
-    -- And by IH, a^(k + 1) = a.comp (a^k), so we need:
-    -- (a.comp (a^k)).comp a = a.comp (a.comp (a^k))
+
     simp only [←ContinuousLinearMap.mul_def]
     rw [mul_assoc]
-    -- Now we need: a * (a ^ k * a) = a * (a * a ^ k)
+
     congr 1
 
 
 -- Lemma: State evolution under zero input
--- Lemma: State evolution under zero input
+
 lemma state_evolution_zero_input (sys : DiscreteLinearSystemState σ ι)
     (h_init : sys.x 0 = sys.x₀)
     (h_state : state_system_equation sys)
@@ -80,16 +77,11 @@ lemma state_evolution_zero_input (sys : DiscreteLinearSystemState σ ι)
     unfold zero_input at h1
     simp [ContinuousLinearMap.map_zero] at h1
     rw [h1]
-    -- Now we need to show: sys.a ((sys.a ^ k) sys.x₀) = (sys.a ^ (k + 1)) sys.x₀
+
     rw [←ContinuousLinearMap.comp_apply]
     congr 1
 
     rw [system_power_multiplication_flopped]
-
-
-    -- Now we need to show: sys.a.comp (sys.a ^ k) = sys.a ^ (k + 1)
-
-
 
 
 
