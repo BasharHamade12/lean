@@ -36,33 +36,36 @@ lemma system_power_multiplication (a : σ →L[ℂ] σ) (k : ℕ) :
     a ^ (k + 1) = (a ^ k).comp a := by
   induction k with
   | zero =>
-    simp [pow_zero]
-    exact ContinuousLinearMap.id_comp a
-
+    simp [pow_zero] 
+    exact ContinuousLinearMap.id_comp a 
+    
   | succ k ih =>
     rw [pow_succ]
     rw [ih]
-    rfl
+    rfl 
 
 lemma system_power_multiplication_flopped (a : σ →L[ℂ] σ) (k : ℕ) :
     a ^ (k + 1) = a.comp (a^k) := by
   induction k with
   | zero =>
-    simp [pow_zero]
-    exact ContinuousLinearMap.id_comp a
-
+    simp [pow_zero] 
+    exact ContinuousLinearMap.id_comp a 
+    
   | succ k ih =>
     rw [pow_succ]
-    rw [ih]
-
+    rw [ih] 
+    -- Now we have: a.comp (a^k) * a = a.comp (a^(k + 1))
+    -- Since * is composition, this is: (a.comp (a^k)).comp a = a.comp (a^(k + 1))
+    -- And by IH, a^(k + 1) = a.comp (a^k), so we need:
+    -- (a.comp (a^k)).comp a = a.comp (a.comp (a^k))
     simp only [←ContinuousLinearMap.mul_def]
-    rw [mul_assoc]
-
+    rw [mul_assoc] 
+    -- Now we need: a * (a ^ k * a) = a * (a * a ^ k)
     congr 1
-
+    
 
 -- Lemma: State evolution under zero input
-
+-- Lemma: State evolution under zero input
 lemma state_evolution_zero_input (sys : DiscreteLinearSystemState σ ι)
     (h_init : sys.x 0 = sys.x₀)
     (h_state : state_system_equation sys)
@@ -71,20 +74,22 @@ lemma state_evolution_zero_input (sys : DiscreteLinearSystemState σ ι)
   intro k
   induction' k with k ih
   · simp [pow_zero, h_init]
-  · have h1 : sys.x (k + 1) = sys.a (sys.x k) + sys.B (sys.u k) := h_state k
-    rw [ih] at h1
-    rw [h_zero_input] at h1
+  · have h1 : sys.x (k + 1) = sys.a (sys.x k) + sys.B (sys.u k) := h_state k 
+    rw [ih] at h1 
+    rw [h_zero_input] at h1 
     unfold zero_input at h1
     simp [ContinuousLinearMap.map_zero] at h1
     rw [h1]
+    -- Now we need to show: sys.a ((sys.a ^ k) sys.x₀) = (sys.a ^ (k + 1)) sys.x₀
+    rw [←ContinuousLinearMap.comp_apply]  
+    congr 1 
 
-    rw [←ContinuousLinearMap.comp_apply]
-    congr 1
+    rw [system_power_multiplication_flopped] 
 
-    rw [system_power_multiplication_flopped]
+    
+    
 
-
-
+    
 
 -- Original theorem: Bound on state norm
 theorem bound_x_norm
@@ -94,11 +99,11 @@ theorem bound_x_norm
   intro k hk
   -- Use the assumption hx to rewrite sys.x k
   rw [hx k]
-  exact ContinuousLinearMap.le_opNorm (sys.a ^ k) sys.x₀
+  exact ContinuousLinearMap.le_opNorm (sys.a ^ k) sys.x₀ 
 
 -- Definition: Spectral radius less than one
-def spectral_radius_less_than_one (a : σ →L[ℂ] σ) : Prop :=
-  spectralRadius ℂ a < 1
+def spectral_radius_less_than_one (a : σ →L[ℂ] σ) : Prop := 
+  spectralRadius ℂ a < 1 
 
 -- Theorem: Gelfand's formula application
 theorem gelfand_le_one_when_spectral_radius_le_one
@@ -108,4 +113,74 @@ theorem gelfand_le_one_when_spectral_radius_le_one
   intro h_spectral
   unfold spectral_radius_less_than_one at h_spectral
   have h_gelfand := spectrum.limsup_pow_nnnorm_pow_one_div_le_spectralRadius a
-  convert lt_of_le_of_lt h_gelfand h_spectral
+  convert lt_of_le_of_lt h_gelfand h_spectral 
+
+
+theorem gelfand_eventually_bounded [CompleteSpace σ]
+    (a : σ →L[ℂ] σ) (h : Filter.limsup (fun n : ℕ ↦ (‖a ^ n‖₊ : ENNReal) ^ (1 / n : ℝ)) Filter.atTop < 1) :
+    ∃ (r : ENNReal) (N : ℕ), 0 < r ∧ r < 1 ∧ ∀ (k : ℕ), N < k → (‖a ^ k‖₊ : ENNReal) ^ (1 / k : ℝ) < r :=
+by
+  obtain ⟨r, h_limsup_lt_r, h_r_lt_one⟩ := exists_between h
+  have r_pos : 0 < r := lt_of_le_of_lt (zero_le _) h_limsup_lt_r
+
+  have eventually_lt := Filter.eventually_lt_of_limsup_lt h_limsup_lt_r 
+
+  rw [Filter.eventually_atTop] at eventually_lt
+  obtain ⟨N, hN⟩ := eventually_lt
+
+  use r, N
+  refine ⟨r_pos, h_r_lt_one, fun k hk => hN k (Nat.le_of_lt hk)⟩ 
+
+
+
+theorem asymptotic_stability_discrete [CompleteSpace σ] (sys : DiscreteLinearSystemState σ ι)
+  (h_init : sys.x 0 = sys.x₀)
+  (h_state : state_system_equation sys)
+  (h_zero_input : sys.u = zero_input)
+  (h_spectral : spectral_radius_less_than_one sys.a) :
+  Filter.Tendsto (fun k => ‖sys.x k‖) Filter.atTop (nhds 0) := by 
+
+  -- simp only [state_evolution_zero_input sys h_init h_state h_zero_input]  
+
+  have h_gelfand := spectrum.limsup_pow_nnnorm_pow_one_div_le_spectralRadius sys.a 
+
+  
+  have h_gelfand_le_one : Filter.limsup (fun (n : ℕ) => (‖sys.a ^ n‖₊ : ENNReal) ^ (1 / n : ℝ)) Filter.atTop < 1 := by
+      unfold spectral_radius_less_than_one at h_spectral
+      refine lt_of_le_of_lt ?_ h_spectral
+      exact h_gelfand
+  
+  have eventually_bounded := gelfand_eventually_bounded sys.a h_gelfand_le_one 
+  
+  obtain ⟨r, N, r_pos, r_lt_one, h_bound⟩ := eventually_bounded 
+
+  have h_power : ∀ (k : ℕ), N < k → ↑‖sys.a ^ k‖₊ < r ^ k := by
+      intros k' hk'
+      specialize h_bound k' hk'
+      have h_k'_pos : 0 < k' := Nat.zero_lt_of_lt hk'
+      have h_inv_k' : (k' : ℝ)⁻¹ * k' = 1 := by
+        field_simp
+
+      have h_pow : (↑‖sys.a ^ k'‖₊ ^ (1 / k' : ℝ)) ^ (k' : ℝ) < r ^ k' := by
+        rw [← ENNReal.rpow_natCast r k']
+        exact ENNReal.rpow_lt_rpow h_bound (Nat.cast_pos.mpr h_k'_pos)
+
+
+      rw [← ENNReal.rpow_natCast, ← ENNReal.rpow_mul] at h_pow
+      simp at h_pow
+      rw [h_inv_k'] at h_pow
+      simp at h_pow
+      exact h_pow 
+  have hx : ∀ k, sys.x k = (sys.a ^ k) sys.x₀ :=
+      state_evolution_zero_input sys h_init h_state h_zero_input
+  have h_norm_bound : ∀ (k : ℕ), N < k → ‖sys.x k‖ ≤ ‖sys.a ^ k‖ * ‖sys.x₀‖  := by
+    intros k h_N_le_k 
+    rw [hx] 
+    exact ContinuousLinearMap.le_opNorm (sys.a ^ k) sys.x₀  
+  
+
+
+    
+
+
+  sorry
