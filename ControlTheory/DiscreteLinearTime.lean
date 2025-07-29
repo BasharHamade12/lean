@@ -29,14 +29,14 @@ noncomputable def system_evolution (sys : DiscreteLinearSystemState σ ι) : ℕ
   | 0 => sys.x₀
   | k + 1 => sys.a (system_evolution sys k) + sys.B (sys.u k)
 
--- Definition: Assumption that the system's state sequence satisfies the evolution equation
+-- Discrete State space representatio
 def state_system_equation (sys : DiscreteLinearSystemState σ ι) : Prop :=
   ∀ k : ℕ, sys.x (k + 1) = sys.a (sys.x k) + sys.B (sys.u k)
 
 -- Zero input sequence
 def zero_input : ℕ → ι := fun _ => 0
 
--- Lemma: Power multiplication for continuous linear maps
+-- Power multiplication for continuous linear maps
 lemma system_power_multiplication (a : σ →L[ℂ] σ) (k : ℕ) :
     a ^ (k + 1) = (a ^ k).comp a := by
   induction k with
@@ -66,7 +66,7 @@ lemma system_power_multiplication_flopped (a : σ →L[ℂ] σ) (k : ℕ) :
     congr 1
 
 
--- Lemma: State evolution under zero input
+
 -- Lemma: State evolution under zero input
 lemma state_evolution_zero_input (sys : DiscreteLinearSystemState σ ι)
     (h_init : sys.x 0 = sys.x₀)
@@ -107,7 +107,7 @@ theorem bound_x_norm
 def spectral_radius_less_than_one (a : σ →L[ℂ] σ) : Prop :=
   spectralRadius ℂ a < 1
 
--- Theorem: Gelfand's formula application
+-- Theorem: If spectral radius of 'a' is less than one , then the gelfand formula tends to a limit less than one
 theorem gelfand_le_one_when_spectral_radius_le_one
     [CompleteSpace σ] (a : σ →L[ℂ] σ) :
     spectral_radius_less_than_one a →
@@ -118,6 +118,8 @@ theorem gelfand_le_one_when_spectral_radius_le_one
   convert lt_of_le_of_lt h_gelfand h_spectral
 
 
+
+-- If the gelfand formula tends to a limit less than one, then there exists  r < 1 such that gelfand is less than r , forall k > some N
 theorem gelfand_eventually_bounded [CompleteSpace σ]
     (a : σ →L[ℂ] σ) (h : Filter.limsup (fun n : ℕ ↦ (‖a ^ n‖₊ : ENNReal) ^ (1 / n : ℝ)) Filter.atTop < 1) :
     ∃ (r : ENNReal) (N : ℕ), 0 < r ∧ r < 1 ∧ ∀ (k : ℕ), N < k → (‖a ^ k‖₊ : ENNReal) ^ (1 / k : ℝ) < r :=
@@ -135,6 +137,7 @@ by
   refine ⟨r_pos, h_r_lt_one, fun k hk => hN k (Nat.le_of_lt hk)⟩
 
 
+-- forall 0 < r < 1 and forall k > some N , if a^k < r^k  then a^k tends to zero
 theorem power_to_zero [CompleteSpace σ] (sys : DiscreteLinearSystemState σ ι)
   (r : ENNReal) (N : ℕ)
   (r_pos : 0 < r)
@@ -194,7 +197,7 @@ theorem power_to_zero [CompleteSpace σ] (sys : DiscreteLinearSystemState σ ι)
 
 
 
-
+-- Main theorem : If the spectral radius of the system matrix is less than one and the input sequence is null, then the state sequence converges to zero.
 theorem asymptotic_stability_discrete [CompleteSpace σ] (sys : DiscreteLinearSystemState σ ι)
   (h_init : sys.x 0 = sys.x₀)
   (h_state : state_system_equation sys)
