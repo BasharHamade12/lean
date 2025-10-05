@@ -1,9 +1,10 @@
 import Mathlib.Analysis.Normed.Group.Basic
-import Mathlib.Analysis.NormedSpace.Real
+import Mathlib.Analysis.Normed.Module.RCLike.Real
 import Mathlib.Analysis.Normed.Operator.ContinuousLinearMap
-import Mathlib.Data.Complex.Order
+import Mathlib.Analysis.Complex.Order
 import Mathlib.Analysis.Normed.Algebra.Spectrum
 import Mathlib.Order.Basic
+import Mathlib.Analysis.Normed.Algebra.GelfandFormula
 
 open scoped ComplexOrder
 
@@ -68,25 +69,27 @@ lemma system_power_multiplication_flopped (a : σ →L[ℂ] σ) (k : ℕ) :
 
 
 -- Lemma: State evolution under zero input
+-- Lemma: State evolution under zero input
 lemma state_evolution_zero_input (sys : DiscreteLinearSystemState σ ι)
-    (h_init : sys.x 0 = sys.x₀)
-    (h_state : state_system_equation sys)
-    (h_zero_input : sys.u = zero_input) :
-    ∀ k, sys.x k = (sys.a ^ k) sys.x₀ := by
+ (h_init : sys.x 0 = sys.x₀)
+ (h_state : state_system_equation sys)
+ (h_zero_input : sys.u = zero_input) :
+ ∀ k, sys.x k = (sys.a ^ k) sys.x₀ := by
   intro k
-  induction' k with k ih
-  · simp [pow_zero, h_init]
-  · have h1 : sys.x (k + 1) = sys.a (sys.x k) + sys.B (sys.u k) := h_state k
-    rw [ih] at h1
-    rw [h_zero_input] at h1
-    unfold zero_input at h1
-    simp [ContinuousLinearMap.map_zero] at h1
-    rw [h1]
-    -- Now we need to show: sys.a ((sys.a ^ k) sys.x₀) = (sys.a ^ (k + 1)) sys.x₀
-    rw [←ContinuousLinearMap.comp_apply]
-    congr 1
-
-    rw [system_power_multiplication_flopped]
+  induction k with
+ | zero =>
+   simp [pow_zero, h_init]
+ | succ k ih =>
+   have h1 : sys.x (k + 1) = sys.a (sys.x k) + sys.B (sys.u k) := h_state k
+   rw [ih] at h1
+   rw [h_zero_input] at h1
+   unfold zero_input at h1
+   simp [ContinuousLinearMap.map_zero] at h1
+   rw [h1]
+-- Now we need to show: sys.a ((sys.a ^ k) sys.x₀) = (sys.a ^ (k + 1)) sys.x₀
+   rw [←ContinuousLinearMap.comp_apply]
+   congr 1
+   rw [system_power_multiplication_flopped]
 
 
 
