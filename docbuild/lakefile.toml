@@ -1,0 +1,15 @@
+name = "docbuild"
+reservoir = false
+   
+version = "0.1.0"
+packagesDir = "../.lake/packages"
+   
+[[require]]
+
+name = "control_theory"  # ✅ Use the package name
+path = "../"
+   
+[[require]]
+scope = "leanprover"
+name = "doc-gen4"
+rev = "main"

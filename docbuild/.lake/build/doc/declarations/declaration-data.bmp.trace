@@ -1,0 +1,17 @@
+{"synthetic": false,
+ "outputs": null,
+ "log":
+ [{"message": "Documentation indexing", "level": "info"},
+  {"message":
+   ".> /home/bashar/lean/.lake/packages/doc-gen4/.lake/build/bin/doc-gen4 index --build /home/bashar/lean/docbuild/.lake/build",
+   "level": "trace"}],
+ "inputs":
+ [["/home/bashar/lean/.lake/packages/doc-gen4/.lake/build/bin/doc-gen4",
+   "7994352598371063717"],
+  ["<nil>", "6748611221465965550"],
+  ["<collection>",
+   [["/home/bashar/lean/docbuild/.lake/build/doc/ControlTheory/DiscreteLinearTime.html",
+     "12445619534891679621"],
+    ["/home/bashar/lean/docbuild/.lake/build/doc/ControlTheory.html",
+     "15543766323450063085"]]]],
+ "depHash": "4745372801367454294"}
