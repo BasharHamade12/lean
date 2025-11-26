@@ -275,3 +275,65 @@ theorem asymptotic_stability_discrete [CompleteSpace σ] (sys : DiscreteLinearSy
     h_prod_zero
     (fun k => norm_nonneg _)
     h_norm_eq
+
+
+ -- State evolution starting from zero initial state with a given input sequence
+noncomputable def evolve_from_zero (a : σ →L[ℂ] σ) (B : ι →L[ℂ] σ) (u : ℕ → ι) : ℕ → σ
+  | 0 => 0
+  | k + 1 => a (evolve_from_zero a B u k) + B (u k)
+
+
+def IsReachable (a : σ →L[ℂ] σ) (B : ι →L[ℂ] σ) : Prop :=
+  ∀ x_f : σ, ∃ (k_f : ℕ) (u : ℕ → ι), k_f > 0 ∧ evolve_from_zero a B u k_f = x_f
+
+/-- A discrete linear system is reachable if its (A, B) matrices satisfy reachability -/
+def SystemReachable (sys : DiscreteLinearSystemState σ ι) : Prop :=
+  IsReachable sys.a sys.B
+
+
+
+
+open BigOperators
+
+/-- The i-th column block of the controllability matrix: Aⁱ B -/
+noncomputable def controllabilityColumn (a : σ →L[ℂ] σ) (B : ι →L[ℂ] σ) (i : ℕ) : ι →L[ℂ] σ :=
+  (a ^ i).comp B
+
+def controllabilityMatrix (a : σ →L[ℂ] σ) (B : ι →L[ℂ] σ) (n : ℕ) : Fin n → (ι →L[ℂ] σ) :=
+  fun i => (a ^ (i : ℕ)).comp B
+
+open Finset
+
+theorem evolve_from_zero_eq_sum (a : σ →L[ℂ] σ) (B : ι →L[ℂ] σ) (u : ℕ → ι) (k : ℕ) :
+    evolve_from_zero a B u k = ∑ j ∈ Finset.range k, (a ^ (k - 1 - j)) (B (u j)) := by
+
+  induction k with
+  | zero =>
+    -- Base case: x[0] = 0 = empty sum
+    simp [evolve_from_zero]
+  | succ k ih =>
+    simp [evolve_from_zero]
+    rw [ih]
+    simp
+    rw [Finset.sum_range_succ]
+    simp
+
+    --simp only [Nat.add_sub_cancel]
+    apply Finset.sum_congr rfl
+    intro x hx
+
+    -- congr 1
+  --ext x
+    --apply Finset.sum_congr rfl
+
+    have : a.comp (a ^ (k - 1 - x)) = a ^ (k -  x ) := by
+      rw [← system_power_multiplication_flopped]
+      congr
+      have : x < k := Finset.mem_range.mp hx
+      omega
+
+
+
+
+    rw [<-ContinuousLinearMap.comp_apply]
+    rw [this]
