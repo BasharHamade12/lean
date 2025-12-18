@@ -1,59 +1,75 @@
 
 
-Let a discrete-time linear time-invariant (LTI) system be given by the state-space model:
-\[
-\mathbf{x}(k+1) = \mathbf{A}\mathbf{x}(k) + \mathbf{B}\mathbf{u}(k),
-\]
-where:
-- \(\mathbf{x}(k) \in \mathbb{R}^n\) is the state vector at time step \(k\),
-- \(\mathbf{u}(k) \in \mathbb{R}^p\) is the input vector,
-- \(\mathbf{A} \in \mathbb{R}^{n \times n}\) is the state matrix,
-- \(\mathbf{B} \in \mathbb{R}^{n \times p}\) is the input matrix.
+## Direct Proof of Necessity
 
-Given \(\mathbf{u}(k) = \mathbf{0} \; \forall k \geq 0\), we have the following equivalence:
+**Theorem:** If the discrete-time system \(x(k+1) = Ax(k) + Bu(k)\) is completely reachable, then \(\text{rank}(\mathcal{C}) = n\).
+
+### Step 1: Characterize the Reachable Set Explicitly
+
+Starting from \(x(0) = 0\), the state at time \(k\) is given by direct iteration:
+
 \[
-|\lambda_i(\mathbf{A})| < 1 \; \forall i \in \{1, 2, \dots, n\} \quad \Leftrightarrow \quad \lim_{k \to \infty} \|\mathbf{x}(k)\| = 0.
+x(k) = \sum_{j=0}^{k-1} A^{k-1-j}Bu(j)
 \]
 
----
+This can be written as:
 
+\[
+x(k) = \begin{bmatrix} A^{k-1}B & A^{k-2}B & \cdots & B \end{bmatrix} \begin{bmatrix} u(0) \\ u(1) \\ \vdots \\ u(k-1) \end{bmatrix}
+\]
 
+Therefore, the set of states reachable in exactly \(k\) steps is:
 
+\[
+\mathcal{R}_k = \text{Range}(\mathcal{C}_k) = \text{Im}(\mathcal{C}_k)
+\]
 
+where \(\mathcal{C}_k = [A^{k-1}B \mid \cdots \mid B]\).
 
-**Claim:**  
-If \(\mathbf{u}(k) = \mathbf{0}\) and \(|\lambda_i(\mathbf{A})| < 1\) for all \(i\), then \(\lim_{k \to \infty} \|\mathbf{x}(k)\| = 0\).
+### Step 2: Apply Cayley-Hamilton to Establish Finite Dimension
 
+By the Cayley-Hamilton theorem, \(A^n\) can be expressed as a linear combination of \(I, A, \ldots, A^{n-1}\). Therefore, for any \(j \geq n\):
 
+\[
+A^j B \in \text{span}\{B, AB, \ldots, A^{n-1}B\}
+\]
 
+This directly implies:
 
-**Proof:**
+\[
+\text{Range}(\mathcal{C}_k) \subseteq \text{Range}(\mathcal{C}_n) = \text{Range}(\mathcal{C}) \quad \text{for all } k \geq 1
+\]
 
-  
-given $|\lambda_i(\mathbf{A})| < 1$ $\implies$ $\rho(\mathbf{A}) < 1$.
+Conversely, since \(\mathcal{C} = \mathcal{C}_n\) is formed from columns of various \(\mathcal{C}_k\), we have \(\text{Range}(\mathcal{C}) \subseteq \bigcup_{k \geq 1} \text{Range}(\mathcal{C}_k)\).
 
+Therefore, the total reachable set is exactly:
 
-From Gelfand's formula, we have:
-$$\lim_{k \to \infty} \|\mathbf{A}^k\|^{1/k} = \rho(\mathbf{A})$$
-Since we know $\rho(\mathbf{A}) < 1$, let's choose a real number $r$ such that $\rho(\mathbf{A}) < r < 1$. Such a number must exist.
+\[
+\mathcal{R} = \bigcup_{k=1}^{\infty} \mathcal{R}_k = \text{Range}(\mathcal{C})
+\]
 
+### Step 3: Apply the Definition of Complete Reachability
 
-$\implies \|\mathbf{A}^k\|^{1/k} < r \ \ \ \ \ \ \ \ \forall k > some \ N$
+By the definition of complete reachability, **every** state \(x \in \mathbb{R}^n\) is reachable from the origin. This means:
 
+\[
+\mathcal{R} = \mathbb{R}^n
+\]
 
-$ \implies \|\mathbf{A}^k\| < r^k \quad \text{for all } k > N $
+### Step 4: Conclude the Rank Condition
 
+From Steps 2 and 3:
 
-but $\lim_{k \to \infty} r^k = 0$ and $0 \le \|\mathbf{A}^k\| < r^k$
-    
-By the Squeeze Theorem, as the upper and lower bounds both go to zero, the term in the middle must also go to zero:
- $$\lim_{k \to \infty} \|\mathbf{A}^k\| = 0$$
+\[
+\text{Range}(\mathcal{C}) = \mathcal{R} = \mathbb{R}^n
+\]
 
+By the fundamental property of matrix rank, the range of a matrix equals the entire space \(\mathbb{R}^n\) if and only if the matrix has full row rank. Since \(\mathcal{C}\) is an \(n \times nm\) matrix:
 
-we have $\mathbf{x}(k) = \mathbf{A}^k \mathbf{x}(0)  \implies$ 
-    $0 \le \|\mathbf{x}(k)\| = \|\mathbf{A}^k \mathbf{x}(0)\| \le \|\mathbf{A}^k\| \|\mathbf{x}(0)\|$
-    Taking the limit as $k \to \infty$:
-    $\lim_{k \to \infty} \|\mathbf{x}(k)\| \le \left(\lim_{k \to \infty} \|\mathbf{A}^k\|\right) \|\mathbf{x}(0)\| = 0 \cdot \|\mathbf{x}(0)\| = 0$
-    Again, by the Squeeze Theorem, since $\|\mathbf{x}(k)\|$ is bounded below by 0 and its upper bound approaches 0, we conclude:
-    $$\lim_{k \to \infty} \|\mathbf{x}(k)\| = 0$$
+\[
+\text{Range}(\mathcal{C}) = \mathbb{R}^n \quad \Longleftrightarrow \quad \text{rank}(\mathcal{C}) = n
+\]
+
+Therefore, \(\text{rank}(\mathcal{C}) = n\). ∎
+
 
